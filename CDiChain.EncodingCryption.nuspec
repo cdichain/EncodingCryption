@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>http://project_url_here_or_delete_this_line/</projectUrl>
+    <iconUrl>http://icon_url_here_or_delete_this_line/</iconUrl>
+    <description>编码和加解密的工具库, 包括MD5, 国密算法SM3,SM4, 和 DES文件加密, 数字编码等功能</description>
+    <releaseNotes>baseline</releaseNotes>
+    <copyright>Copyright 2020</copyright>
+    <tags>Encoding SM3 SM4 MD5 DES</tags>
+  </metadata>
+</package>

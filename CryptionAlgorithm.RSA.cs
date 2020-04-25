@@ -1,5 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math;
+using System;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace CDiChain.EncodingCryption
@@ -14,7 +17,7 @@ namespace CDiChain.EncodingCryption
 			public static RsaWithXmlPrivateKey UseXmlPrivateKey(string xmlPrivateKey) => new RsaWithXmlPrivateKey(xmlPrivateKey);
 			public static RsaWithXmlPubKey UseXmlPublicaKey(string xmlPublicKey) => new RsaWithXmlPubKey(xmlPublicKey);
 
-			public static byte[] Encrypt(string pemOrXmlPublicKey,string plaintext)
+			public static byte[] Encrypt(string pemOrXmlPublicKey, string plaintext)
 			{
 				if (pemOrXmlPublicKey.TrimStart().StartsWith("<"))
 				{
@@ -96,7 +99,7 @@ namespace CDiChain.EncodingCryption
 				RSAParameters rsaPara = new RSAParameters();
 				using (StringReader sReader = new StringReader(pemKey))
 				{
-					Org.BouncyCastle.OpenSsl.PemReader pemReader = new Org.BouncyCastle.OpenSsl.PemReader(sReader);
+					var pemReader = new Org.BouncyCastle.OpenSsl.PemReader(sReader);
 					pemObject = pemReader.ReadObject();
 				}
 				//RSA私钥
@@ -137,11 +140,11 @@ namespace CDiChain.EncodingCryption
 			}
 			#endregion
 
-			public class RsaWithPemPubKey: RsaWithXmlPubKey
+			public class RsaWithPemPubKey : RsaWithXmlPubKey
 			{
 
 				public RsaWithPemPubKey(string pemPubKey)
-					:base(PemToXmlKey(pemPubKey, false))
+					: base(PemToXmlKey(pemPubKey, false))
 				{
 				}
 
@@ -151,7 +154,7 @@ namespace CDiChain.EncodingCryption
 			{
 				private string _xmlPubKey;
 
-				public RsaWithXmlKey(string xmlPubKey)
+				public RsaWithXmlPubKey(string xmlPubKey)
 				{
 					_xmlPubKey = xmlPubKey;
 				}

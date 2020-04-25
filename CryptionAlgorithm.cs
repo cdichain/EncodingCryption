@@ -6,6 +6,6 @@ namespace CDiChain.EncodingCryption
 {
     public partial class CryptionAlgorithm
     {
-        public const string VERSION = "1.0.2";
+        public const string VERSION = "2.0.0";
     }
 }

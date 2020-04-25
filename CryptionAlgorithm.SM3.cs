@@ -1,10 +1,5 @@
-﻿using CDiChain.EncodingCryption.Encoder;
-using CDiChain.EncodingCryption.SMCryption;
-using System;
-using System.IO;
-using System.Security.Cryptography;
+﻿using CDiChain.EncodingCryption.SMCryption;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace CDiChain.EncodingCryption
 {

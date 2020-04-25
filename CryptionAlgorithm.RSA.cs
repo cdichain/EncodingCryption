@@ -44,7 +44,7 @@ namespace CDiChain.EncodingCryption
 			/// <param name="RSAKey"></param>
 			/// <param name="isPrivateKey"></param>
 			/// <returns></returns>
-			public static string XmlKeyToPem(string xmlKey, bool isPrivateKey)
+			public static string ConvertXmlKeyToPem(string xmlKey, bool isPrivateKey)
 			{
 				if (string.IsNullOrEmpty(xmlKey))
 				{
@@ -87,7 +87,7 @@ namespace CDiChain.EncodingCryption
 			/// <param name="pemKey"></param>
 			/// <param name="isPrivateKey"></param>
 			/// <returns></returns>
-			public static string PemToXmlKey(string pemKey, bool isPrivateKey)
+			public static string ConvertPemToXmlKey(string pemKey, bool isPrivateKey)
 			{
 				if (string.IsNullOrEmpty(pemKey))
 				{
@@ -140,76 +140,77 @@ namespace CDiChain.EncodingCryption
 			}
 			#endregion
 
-			public class RsaWithPemPubKey : RsaWithXmlPubKey
+		}
+
+
+		public class RsaWithPemPubKey : RsaWithXmlPubKey
+		{
+
+			public RsaWithPemPubKey(string pemPubKey)
+				: base(CryptionAlgorithm.RSA.ConvertPemToXmlKey(pemPubKey, false))
 			{
-
-				public RsaWithPemPubKey(string pemPubKey)
-					: base(PemToXmlKey(pemPubKey, false))
-				{
-				}
-
 			}
 
-			public class RsaWithXmlPubKey
+		}
+
+		public class RsaWithXmlPubKey
+		{
+			private string _xmlPubKey;
+
+			public RsaWithXmlPubKey(string xmlPubKey)
 			{
-				private string _xmlPubKey;
-
-				public RsaWithXmlPubKey(string xmlPubKey)
-				{
-					_xmlPubKey = xmlPubKey;
-				}
-
-				/// <summary>
-				/// RSA加密
-				/// </summary>
-				/// <param name="content">要加密的内容</param>
-				/// <returns></returns>
-				public byte[] Encrypt(string content)
-				{
-					string encryptedMsg = string.Empty;
-					using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
-					{
-						rsa.FromXmlString(_xmlPubKey);
-						return rsa.Encrypt(Encoding.UTF8.GetBytes(content), false);
-					}
-				}
+				_xmlPubKey = xmlPubKey;
 			}
 
-
-			public class RsaWithPemPrivateKey : RsaWithXmlPrivateKey
+			/// <summary>
+			/// RSA加密
+			/// </summary>
+			/// <param name="content">要加密的内容</param>
+			/// <returns></returns>
+			public byte[] Encrypt(string content)
 			{
-
-				public RsaWithPemPrivateKey(string pemPrivateKey)
-					: base(PemToXmlKey(pemPrivateKey, true))
+				string encryptedMsg = string.Empty;
+				using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
 				{
+					rsa.FromXmlString(_xmlPubKey);
+					return rsa.Encrypt(Encoding.UTF8.GetBytes(content), false);
 				}
+			}
+		}
 
+		public class RsaWithPemPrivateKey : RsaWithXmlPrivateKey
+		{
+
+			public RsaWithPemPrivateKey(string pemPrivateKey)
+				: base(CryptionAlgorithm.RSA.ConvertPemToXmlKey(pemPrivateKey, true))
+			{
 			}
 
-			public class RsaWithXmlPrivateKey
+		}
+
+		public class RsaWithXmlPrivateKey
+		{
+			private string _xmlPrivateKey;
+
+			public RsaWithXmlPrivateKey(string xmlPrivateKey)
 			{
-				private string _xmlPrivateKey;
+				_xmlPrivateKey = xmlPrivateKey;
+			}
 
-				public RsaWithXmlPrivateKey(string xmlPrivateKey)
+			/// <summary>
+			/// RSA解密
+			/// </summary>
+			/// <param name="content">解密内容</param>
+			/// <param name="priKey">私钥（xml格式）</param>
+			/// <returns></returns>
+			public string Decrypt(string content)
+			{
+				string decryptedContent = string.Empty;
+				using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
 				{
-					_xmlPrivateKey = xmlPrivateKey;
-				}
-
-				/// <summary>
-				/// RSA解密
-				/// </summary>
-				/// <param name="content">解密内容</param>
-				/// <param name="priKey">私钥（xml格式）</param>
-				/// <returns></returns>
-				public string Decrypt(string content)
-				{
-					string decryptedContent = string.Empty;
-					using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
-					{
-						rsa.FromXmlString(_xmlPrivateKey);
-						var decryptedData = rsa.Decrypt(Convert.FromBase64String(content), false);
-						return Encoding.UTF8.GetString(decryptedData);
-					}
+					rsa.FromXmlString(_xmlPrivateKey);
+					var decryptedData = rsa.Decrypt(Convert.FromBase64String(content), false);
+					return Encoding.UTF8.GetString(decryptedData);
 				}
 			}
 		}

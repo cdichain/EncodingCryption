@@ -1,5 +1,7 @@
-﻿using Org.BouncyCastle.Crypto.Parameters;
+﻿using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Security;
 using System;
 using System.IO;
 using System.Security.Cryptography;
@@ -37,10 +39,31 @@ namespace CDiChain.EncodingCryption
                 return UsePemPrivateKey(pemOrXmlPrivateKey).Decrypt(ciphertext);
             }
 
+            public static byte[] EncryptWithPrivateKey(string pemOrXmlPrivateKey, string plaintext)
+            {
+                if (pemOrXmlPrivateKey.TrimStart().StartsWith("<"))
+                {
+                    return UseXmlPrivateKey(pemOrXmlPrivateKey).Encrypt(plaintext);
+                }
+
+                return UsePemPrivateKey(pemOrXmlPrivateKey).Encrypt(plaintext);
+            }
+
+            public static string DecryptWithPublicKey(string pemOrXmlPublicKey, string ciphertext)
+            {
+                if (pemOrXmlPublicKey.TrimStart().StartsWith("<"))
+                {
+                    return UseXmlPublicaKey(pemOrXmlPublicKey).Decrypt(ciphertext);
+                }
+
+                return UsePemPublicKey(pemOrXmlPublicKey).Decrypt(ciphertext);
+            }
+
             public static KeyPair CreateKeyPair()
             {
                 var rsa = new RSACryptoServiceProvider();
-                return new KeyPair {
+                return new KeyPair
+                {
                     PrivateKey = rsa.ToXmlString(true),
                     PublicKey = rsa.ToXmlString(false)
                 };
@@ -149,6 +172,41 @@ namespace CDiChain.EncodingCryption
             }
             #endregion
 
+            public static AsymmetricCipherKeyPair GetRsaKeyPair(RSAParameters rp)
+            {
+                BigInteger modulus = new BigInteger(1, rp.Modulus);
+                BigInteger pubExp = new BigInteger(1, rp.Exponent);
+
+                RsaKeyParameters pubKey = new RsaKeyParameters(
+                    false,
+                    modulus,
+                    pubExp);
+
+                RsaPrivateCrtKeyParameters privKey = new RsaPrivateCrtKeyParameters(
+                    modulus,
+                    pubExp,
+                    new BigInteger(1, rp.D),
+                    new BigInteger(1, rp.P),
+                    new BigInteger(1, rp.Q),
+                    new BigInteger(1, rp.DP),
+                    new BigInteger(1, rp.DQ),
+                    new BigInteger(1, rp.InverseQ));
+
+                return new AsymmetricCipherKeyPair(pubKey, privKey);
+            }
+
+            public static AsymmetricCipherKeyPair GetRsaKeyPair(RSACryptoServiceProvider key)
+            {
+                return GetRsaKeyPair(key.ExportParameters(true));
+            }
+
+            public static RsaKeyParameters GetRsaPublicKey(RSAParameters rp)
+            {
+                return new RsaKeyParameters(
+                    false,
+                    new BigInteger(1, rp.Modulus),
+                    new BigInteger(1, rp.Exponent));
+            }
         }
 
 
@@ -192,6 +250,27 @@ namespace CDiChain.EncodingCryption
                     return rsa.Encrypt(Encoding.UTF8.GetBytes(content), false);
                 }
             }
+
+            public string Decrypt(string ciphertext)
+            {
+                //加载公钥
+                RSACryptoServiceProvider publicRsa = new RSACryptoServiceProvider();
+                publicRsa.FromXmlString(_xmlPubKey);
+                RSAParameters rp = publicRsa.ExportParameters(false);
+
+                //转换密钥
+                AsymmetricKeyParameter pbk = RSA.GetRsaPublicKey(rp);
+
+                IBufferedCipher c = CipherUtilities.GetCipher("RSA/ECB/PKCS1Padding");
+                //第一个参数为true表示加密，为false表示解密；第二个参数表示密钥
+                c.Init(false, pbk);
+
+                byte[] DataToDecrypt = Convert.FromBase64String(ciphertext);
+                byte[] outBytes = c.DoFinal(DataToDecrypt);//解密
+
+                string strDec = Encoding.UTF8.GetString(outBytes);
+                return strDec;
+            }
         }
 
         public class RsaWithPemPrivateKey : RsaWithXmlPrivateKey
@@ -206,7 +285,7 @@ namespace CDiChain.EncodingCryption
 
         public class RsaWithXmlPrivateKey
         {
-            private string _xmlPrivateKey;
+            private readonly string _xmlPrivateKey;
 
             public RsaWithXmlPrivateKey(string xmlPrivateKey)
             {
@@ -228,6 +307,23 @@ namespace CDiChain.EncodingCryption
                     var decryptedData = rsa.Decrypt(Convert.FromBase64String(content), false);
                     return Encoding.UTF8.GetString(decryptedData);
                 }
+            }
+
+            public byte[] Encrypt(string plaintext)
+            {
+                //加载私钥
+                RSACryptoServiceProvider privateRsa = new RSACryptoServiceProvider();
+                privateRsa.FromXmlString(_xmlPrivateKey);
+
+                //转换密钥
+                AsymmetricCipherKeyPair keyPair = RSA.GetRsaKeyPair(privateRsa);
+                IBufferedCipher c = CipherUtilities.GetCipher("RSA/ECB/PKCS1Padding"); //使用RSA/ECB/PKCS1Padding格式
+                                                                                       //第一个参数为true表示加密，为false表示解密；第二个参数表示密钥
+
+                c.Init(true, keyPair.Private);
+                byte[] DataToEncrypt = Encoding.UTF8.GetBytes(plaintext);
+
+                return c.DoFinal(DataToEncrypt);//加密
             }
         }
     }

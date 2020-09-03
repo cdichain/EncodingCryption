@@ -66,6 +66,32 @@ namespace CDiChain.EncodingCryption
 
                 return sm4.EncryptString(plaintext, SM4Models.ECB);
             }
+
+            public static string Decrypt_ECB(string ciphertext, byte[] password, Encoding encoding = null)
+            {
+                if (encoding == null)
+                {
+                    encoding = Encoding.UTF8;
+                }
+
+                var model =EncodingExtension. IsHexString(ciphertext) ? EncryptionResultTypes.HexString : EncryptionResultTypes.Base64String;
+                var sm4 = new SM4Algorithm(password, null, encoding, model);
+
+                return sm4.DecryptString(ciphertext, SM4Models.ECB);
+            }
+
+            public static string Decrypt_CBC(string ciphertext, byte[] password, byte[] iv, Encoding encoding = null)
+            {
+                if (encoding == null)
+                {
+                    encoding = Encoding.UTF8;
+                }
+
+                var model = EncodingExtension.IsHexString(ciphertext) ? EncryptionResultTypes.HexString : EncryptionResultTypes.Base64String;
+                var sm4 = new SM4Algorithm(password, iv, encoding, model);
+
+                return sm4.DecryptString(ciphertext, SM4Models.CBC);
+            }
         }
     }
 }

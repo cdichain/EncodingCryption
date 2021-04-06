@@ -34,9 +34,9 @@ namespace CDiChain.EncodingCryption.SMCryption
             switch (models)
             {
                 case SM4Models.ECB:
-                    return EncryptECB(plaintext);
+                    return EncryptECB(_encoding.GetBytes(plaintext));
                 case SM4Models.CBC:
-                    return EncryptCBC(plaintext);
+                    return EncryptCBC(_encoding.GetBytes(plaintext));
                 default:
                     throw new NotSupportedException("不支持的加密类型" + models.ToString());
             }
@@ -44,25 +44,52 @@ namespace CDiChain.EncodingCryption.SMCryption
 
         public string DecryptString(string ciphertext, SM4Models models)
         {
+            byte[] ciphertextBytes;
+            switch (_encryptionResultType)
+            {
+                case EncryptionResultTypes.Base64String:
+                    ciphertextBytes = Convert.FromBase64String(ciphertext);
+                    break;
+                case EncryptionResultTypes.HexString:
+                    ciphertextBytes = Hex.Decode(ciphertext);
+                    break;
+                default:
+                    throw new NotSupportedException("不支持的密文类型" + _encryptionResultType.ToString());
+            }
+
             switch (models)
             {
                 case SM4Models.ECB:
-                    return DecryptECB(ciphertext);
+
+                    return DecryptECB(ciphertextBytes);
                 case SM4Models.CBC:
-                    return DecryptCBC(ciphertext);
+                    return DecryptCBC(ciphertextBytes);
                 default:
                     throw new NotSupportedException("不支持的加密类型" + models.ToString());
             }
         }
 
-        private string EncryptECB(string plainText)
+        public string Encrypt(byte[] data, SM4Models models)
+        {
+            switch (models)
+            {
+                case SM4Models.ECB:
+                    return DecryptECB(data);
+                case SM4Models.CBC:
+                    return DecryptCBC(data);
+                default:
+                    throw new NotSupportedException("不支持的加密类型" + models.ToString());
+            }
+        }
+
+        private string EncryptECB(byte[] plainTextBytes)
         {
             var ctx = new SM4Context();
             ctx.isPadding = true;
             ctx.mode = SM4_ENCRYPT;
 
             sm4_setkey_enc(ctx, _secretKey);
-            var encrypted = sm4_crypt_ecb(ctx, _encoding.GetBytes(plainText));
+            var encrypted = sm4_crypt_ecb(ctx, plainTextBytes);
             //Console.WriteLine(Convert.ToBase64String(encrypted));
             switch (_encryptionResultType)
             {
@@ -75,7 +102,7 @@ namespace CDiChain.EncodingCryption.SMCryption
             }
         }
 
-        private string EncryptCBC(string plainText)
+        private string EncryptCBC(byte[] plainTextBytes)
         {
             if (_iv == null)
             {
@@ -87,7 +114,7 @@ namespace CDiChain.EncodingCryption.SMCryption
             ctx.mode = SM4_ENCRYPT;
 
             sm4_setkey_enc(ctx, _secretKey);
-            var encrypted = sm4_crypt_cbc(ctx, _iv, _encoding.GetBytes(plainText));
+            var encrypted = sm4_crypt_cbc(ctx, _iv, plainTextBytes);
 
             switch (_encryptionResultType)
             {
@@ -100,7 +127,7 @@ namespace CDiChain.EncodingCryption.SMCryption
             }
         }
 
-        private string DecryptECB(string cipherText)
+        private string DecryptECB(byte[] cipherTextBytes)
         {
             var ctx = new SM4Context();
             ctx.isPadding = true;
@@ -108,23 +135,12 @@ namespace CDiChain.EncodingCryption.SMCryption
 
 
             sm4_setkey_dec(ctx, _secretKey);
-            byte[] decrypted;
-            switch (_encryptionResultType)
-            {
-                case EncryptionResultTypes.Base64String:
-                    decrypted = sm4_crypt_ecb(ctx, Convert.FromBase64String(cipherText));
-                    break;
-                case EncryptionResultTypes.HexString:
-                    decrypted = sm4_crypt_ecb(ctx, Hex.Decode(cipherText));
-                    break;
-                default:
-                    throw new NotSupportedException("不支持的密文类型" + _encryptionResultType.ToString());
-            }
+            byte[] decrypted = sm4_crypt_ecb(ctx, cipherTextBytes);
 
             return _encoding.GetString(decrypted);
         }
 
-        private string DecryptCBC(string cipherText)
+        private string DecryptCBC(byte[] cipherTextBytes)
         {
             if (_iv == null)
             {
@@ -136,19 +152,8 @@ namespace CDiChain.EncodingCryption.SMCryption
             ctx.mode = SM4_DECRYPT;
 
             sm4_setkey_dec(ctx, _secretKey);
-            byte[] decrypted;
-            switch (_encryptionResultType)
-            {
-                case EncryptionResultTypes.Base64String:
-                    decrypted = sm4_crypt_cbc(ctx, _iv, Convert.FromBase64String(cipherText));
-                    break;
-                case EncryptionResultTypes.HexString:
-                    decrypted = sm4_crypt_cbc(ctx, _iv, Hex.Decode(cipherText));
-                    break;
-                default:
-                    throw new NotSupportedException("不支持的密文类型" + _encryptionResultType.ToString());
-            }
-
+            byte[] decrypted = sm4_crypt_cbc(ctx, _iv, cipherTextBytes);
+          
             return _encoding.GetString(decrypted);
         }
 

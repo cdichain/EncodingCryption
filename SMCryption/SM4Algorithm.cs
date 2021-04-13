@@ -74,9 +74,9 @@ namespace CDiChain.EncodingCryption.SMCryption
             switch (models)
             {
                 case SM4Models.ECB:
-                    return DecryptECB(data);
+                    return EncryptECB(data);
                 case SM4Models.CBC:
-                    return DecryptCBC(data);
+                    return EncryptCBC(data);
                 default:
                     throw new NotSupportedException("不支持的加密类型" + models.ToString());
             }

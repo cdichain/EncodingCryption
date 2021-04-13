@@ -67,6 +67,54 @@ namespace CDiChain.EncodingCryption
                 return sm4.EncryptString(plaintext, SM4Models.ECB);
             }
 
+            public static string Encrypt_CBC_Base64(byte[] bytes, byte[] password, byte[] iv, Encoding encoding = null)
+            {
+                if (encoding == null)
+                {
+                    encoding = Encoding.UTF8;
+                }
+
+                var sm4 = new SM4Algorithm(password, iv, encoding, EncryptionResultTypes.Base64String);
+
+                return sm4.Encrypt(bytes, SM4Models.CBC);
+            }
+
+            public static string Encrypt_CBC_Hex(byte[] bytes, byte[] password, byte[] iv, Encoding encoding = null)
+            {
+                if (encoding == null)
+                {
+                    encoding = Encoding.UTF8;
+                }
+
+                var sm4 = new SM4Algorithm(password, iv, encoding, EncryptionResultTypes.HexString);
+
+                return sm4.Encrypt(bytes, SM4Models.CBC);
+            }
+
+            public static string Encrypt_ECB_Base64(byte[] bytes, byte[] password, Encoding encoding = null)
+            {
+                if (encoding == null)
+                {
+                    encoding = Encoding.UTF8;
+                }
+
+                var sm4 = new SM4Algorithm(password, null, encoding, EncryptionResultTypes.Base64String);
+
+                return sm4.Encrypt(bytes, SM4Models.ECB);
+            }
+
+            public static string Encrypt_ECB_Hex(byte[] bytes, byte[] password, Encoding encoding = null)
+            {
+                if (encoding == null)
+                {
+                    encoding = Encoding.UTF8;
+                }
+
+                var sm4 = new SM4Algorithm(password, null, encoding, EncryptionResultTypes.HexString);
+
+                return sm4.Encrypt(bytes, SM4Models.ECB);
+            }
+
             public static string Decrypt_ECB(string ciphertext, byte[] password, Encoding encoding = null)
             {
                 if (encoding == null)
@@ -74,7 +122,7 @@ namespace CDiChain.EncodingCryption
                     encoding = Encoding.UTF8;
                 }
 
-                var model =EncodingExtension. IsHexString(ciphertext) ? EncryptionResultTypes.HexString : EncryptionResultTypes.Base64String;
+                var model = EncodingExtension.IsHexString(ciphertext) ? EncryptionResultTypes.HexString : EncryptionResultTypes.Base64String;
                 var sm4 = new SM4Algorithm(password, null, encoding, model);
 
                 return sm4.DecryptString(ciphertext, SM4Models.ECB);

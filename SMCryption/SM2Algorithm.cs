@@ -13,7 +13,7 @@ namespace CDiChain.EncodingCryption.SMCryption
 {
     public class SM2Algorithm
     {
-        public static readonly string[] sm2_param = {
+        private static readonly string[] sm2_param = {
             "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF",// p,0
             "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC",// a,1
             "28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93",// b,2
@@ -22,25 +22,32 @@ namespace CDiChain.EncodingCryption.SMCryption
             "BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0" // gy,5
         };
 
-        public string[] ecc_param = sm2_param;
+        private string[] ecc_param = sm2_param;
 
-        public readonly BigInteger ecc_p;
-        public readonly BigInteger ecc_a;
-        public readonly BigInteger ecc_b;
-        public readonly BigInteger ecc_n;
-        public readonly BigInteger ecc_gx;
-        public readonly BigInteger ecc_gy;
+        private readonly BigInteger ecc_p;
+        private readonly BigInteger ecc_a;
+        private readonly BigInteger ecc_b;
+        private readonly BigInteger ecc_n;
+        private readonly BigInteger ecc_gx;
+        private readonly BigInteger ecc_gy;
 
-        public readonly ECCurve ecc_curve;
-        public readonly ECPoint ecc_point_g;
+        private readonly ECCurve ecc_curve;
+        private readonly ECPoint ecc_point_g;
 
-        public readonly ECDomainParameters ecc_bc_spec;
+        private readonly ECDomainParameters ecc_bc_spec;
 
-        public readonly ECKeyPairGenerator ecc_key_pair_generator;
+        private readonly ECKeyPairGenerator ecc_key_pair_generator;
 
         private byte keyOff;
+        private SM2CombinMode mode = SM2CombinMode.C1C2C3;
 
-        public SM2Algorithm()
+        public enum SM2CombinMode
+        {
+            C1C2C3 = 123,
+            C1C3C2 = 132
+        }
+
+        public SM2Algorithm(SM2CombinMode mode)
         {
             ecc_param = sm2_param;
 
@@ -70,41 +77,41 @@ namespace CDiChain.EncodingCryption.SMCryption
             ecc_key_pair_generator.Init(ecc_ecgenparam);
         }
 
-        public virtual byte[] Sm2GetZ(byte[] userId, ECPoint userKey)
-        {
-            SM3Digest sm3 = new SM3Digest();
-            byte[] p;
-            // userId length
-            int len = userId.Length * 8;
-            sm3.Update((byte)(len >> 8 & 0x00ff));
-            sm3.Update((byte)(len & 0x00ff));
+        //private  byte[] Sm2GetZ(byte[] userId, ECPoint userKey)
+        //{
+        //    SM3Digest sm3 = new SM3Digest();
+        //    byte[] p;
+        //    // userId length
+        //    int len = userId.Length * 8;
+        //    sm3.Update((byte)(len >> 8 & 0x00ff));
+        //    sm3.Update((byte)(len & 0x00ff));
 
-            // userId
-            sm3.BlockUpdate(userId, 0, userId.Length);
+        //    // userId
+        //    sm3.BlockUpdate(userId, 0, userId.Length);
 
-            // a,b
-            p = ecc_a.ToByteArray();
-            sm3.BlockUpdate(p, 0, p.Length);
-            p = ecc_b.ToByteArray();
-            sm3.BlockUpdate(p, 0, p.Length);
-            // gx,gy
-            p = ecc_gx.ToByteArray();
-            sm3.BlockUpdate(p, 0, p.Length);
-            p = ecc_gy.ToByteArray();
-            sm3.BlockUpdate(p, 0, p.Length);
+        //    // a,b
+        //    p = ecc_a.ToByteArray();
+        //    sm3.BlockUpdate(p, 0, p.Length);
+        //    p = ecc_b.ToByteArray();
+        //    sm3.BlockUpdate(p, 0, p.Length);
+        //    // gx,gy
+        //    p = ecc_gx.ToByteArray();
+        //    sm3.BlockUpdate(p, 0, p.Length);
+        //    p = ecc_gy.ToByteArray();
+        //    sm3.BlockUpdate(p, 0, p.Length);
 
-            // x,y
-            p = userKey.AffineXCoord.ToBigInteger().ToByteArray();
-            sm3.BlockUpdate(p, 0, p.Length);
-            p = userKey.AffineYCoord.ToBigInteger().ToByteArray();
-            sm3.BlockUpdate(p, 0, p.Length);
+        //    // x,y
+        //    p = userKey.AffineXCoord.ToBigInteger().ToByteArray();
+        //    sm3.BlockUpdate(p, 0, p.Length);
+        //    p = userKey.AffineYCoord.ToBigInteger().ToByteArray();
+        //    sm3.BlockUpdate(p, 0, p.Length);
 
-            // Z
-            byte[] md = new byte[sm3.GetDigestSize()];
-            sm3.DoFinal(md, 0);
+        //    // Z
+        //    byte[] md = new byte[sm3.GetDigestSize()];
+        //    sm3.DoFinal(md, 0);
 
-            return md;
-        }
+        //    return md;
+        //}
 
         public void GenerateKeyPair(out ECPoint pubk, out BigInteger prik)
         {
@@ -166,13 +173,19 @@ namespace CDiChain.EncodingCryption.SMCryption
             byte[] c3 = new byte[32];
             byte[] p3 = byteConvert32Bytes(p2.Normalize().YCoord.ToBigInteger());
             sm3c3.BlockUpdate(p3, 0, p3.Length);
-            sm3c3.DoFinal(c3, 0);
+            _ = sm3c3.DoFinal(c3, 0);
 
             string sc1 = Encoding.ASCII.GetString(Hex.Encode(c1.GetEncoded()));
             string sc2 = Encoding.ASCII.GetString(Hex.Encode(source));
             string sc3 = Encoding.ASCII.GetString(Hex.Encode(c3));
 
-            return (sc1 + sc2 + sc3).ToUpper();
+            switch (mode)
+            {
+                case SM2CombinMode.C1C2C3:
+                    return (sc1 + sc2 + sc3).ToUpper();
+                default:
+                    return (sc1 + sc3 + sc2).ToUpper();
+            }
         }
 
         private byte[] NextKey(SM3Digest sm3keybase, int ct)
@@ -219,7 +232,7 @@ namespace CDiChain.EncodingCryption.SMCryption
         //    return c2;
         //}
 
-        public static byte[] byteConvert32Bytes(BigInteger n)
+        private static byte[] byteConvert32Bytes(BigInteger n)
         {
             byte[] tmpd = null;
             if (n == null)

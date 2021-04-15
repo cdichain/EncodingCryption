@@ -115,7 +115,7 @@ namespace CDiChain.EncodingCryption
                 return sm4.Encrypt(bytes, SM4Models.ECB);
             }
 
-            public static string Decrypt_ECB(string ciphertext, byte[] password, Encoding encoding = null)
+            public static byte[] Decrypt_ECB(string ciphertext, byte[] password, Encoding encoding = null)
             {
                 if (encoding == null)
                 {
@@ -128,7 +128,7 @@ namespace CDiChain.EncodingCryption
                 return sm4.DecryptString(ciphertext, SM4Models.ECB);
             }
 
-            public static string Decrypt_CBC(string ciphertext, byte[] password, byte[] iv, Encoding encoding = null)
+            public static byte[] Decrypt_CBC(string ciphertext, byte[] password, byte[] iv, Encoding encoding = null)
             {
                 if (encoding == null)
                 {

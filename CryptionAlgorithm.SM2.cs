@@ -1,45 +1,47 @@
-﻿using System;
+﻿using Org.BouncyCastle.Utilities.Encoders;
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using static CDiChain.EncodingCryption.SMCryption.SM2Algorithm;
+using CDiChain.EncodingCryption.SMCryption.SM2.Lib;
 
 namespace CDiChain.EncodingCryption
 {
-	public partial class CryptionAlgorithm
-	{
-		public static class SM2
-		{
-			public static string Encrypt(byte[] data, byte[] publicKey, SM2CombinMode combinMode)
-			{
-				var sm2 = new SMCryption.SM2Algorithm(combinMode);
-				
-				return sm2.Encrypt(publicKey, data);
-			}
+    public partial class CryptionAlgorithm
+    {
+        public static class SM2
+        {
+            public static string Encrypt(byte[] publicKey, byte[] data, SM2CombinMode combinMode)
+            {
+                return SM2Utils.Encrypt(publicKey, data, combinMode);
+            }
 
-			public static string Encrypt(byte[] data, string publicKeyBase64, SM2CombinMode combinMode)
-			{
-				return Encrypt(data, Convert.FromBase64String(publicKeyBase64), combinMode);
-			}
 
-			public static string Encrypt(string text, byte[] publicKey, SM2CombinMode combinMode, Encoding encoding = null)
-			{
-				if (encoding == null)
-				{
-					encoding = Encoding.UTF8;
-				}
+            //public static X509Certificate2 GetCertificateFromBytes(byte[] cert)
+            //{
+            //    string certFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            //    try
+            //    {
+            //        File.WriteAllBytes(certFile, cert);
 
-				return Encrypt(encoding.GetBytes(text), publicKey, combinMode);
-			}
-
-			public static string Encrypt(string text, string publicKeyBase64, SM2CombinMode combinMode, Encoding encoding = null)
-			{
-				if (encoding == null)
-				{
-					encoding = Encoding.UTF8;
-				}
-
-				return Encrypt(encoding.GetBytes(text), Convert.FromBase64String(publicKeyBase64), combinMode);
-			}
-		}
-	}
+            //        X509Store store = new X509Store(StoreLocation.CurrentUser);
+            //        try
+            //        {
+            //            store.Open(OpenFlags.ReadOnly);
+            //            X509Certificate2Collection certCollection = store.Certificates;
+            //            return certCollection[0];
+            //        }
+            //        finally
+            //        {
+            //            store.Close();
+            //        }
+            //    }
+            //    finally
+            //    {
+            //        File.Delete(certFile);
+            //    }
+            //}
+        }
+    }
 }

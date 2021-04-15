@@ -42,7 +42,7 @@ namespace CDiChain.EncodingCryption.SMCryption
             }
         }
 
-        public string DecryptString(string ciphertext, SM4Models models)
+        public byte[] DecryptString(string ciphertext, SM4Models models)
         {
             byte[] ciphertextBytes;
             switch (_encryptionResultType)
@@ -57,6 +57,11 @@ namespace CDiChain.EncodingCryption.SMCryption
                     throw new NotSupportedException("不支持的密文类型" + _encryptionResultType.ToString());
             }
 
+            return Decrypt(ciphertextBytes, models);
+        }
+
+        public byte[] Decrypt(byte[] ciphertextBytes, SM4Models models)
+        {
             switch (models)
             {
                 case SM4Models.ECB:
@@ -127,7 +132,7 @@ namespace CDiChain.EncodingCryption.SMCryption
             }
         }
 
-        private string DecryptECB(byte[] cipherTextBytes)
+        private byte[] DecryptECB(byte[] cipherTextBytes)
         {
             var ctx = new SM4Context();
             ctx.isPadding = true;
@@ -137,10 +142,10 @@ namespace CDiChain.EncodingCryption.SMCryption
             sm4_setkey_dec(ctx, _secretKey);
             byte[] decrypted = sm4_crypt_ecb(ctx, cipherTextBytes);
 
-            return _encoding.GetString(decrypted);
+            return decrypted;
         }
 
-        private string DecryptCBC(byte[] cipherTextBytes)
+        private byte[] DecryptCBC(byte[] cipherTextBytes)
         {
             if (_iv == null)
             {
@@ -154,7 +159,7 @@ namespace CDiChain.EncodingCryption.SMCryption
             sm4_setkey_dec(ctx, _secretKey);
             byte[] decrypted = sm4_crypt_cbc(ctx, _iv, cipherTextBytes);
           
-            return _encoding.GetString(decrypted);
+            return decrypted;
         }
 
         private static long GET_ULONG_BE(byte[] b, int i)
